@@ -1,18 +1,24 @@
-# -*- coding: utf-8 -*-
-import os
-from blueprints.user import user_bp
+from flask.ext.sqlalchemy import SQLAlchemy
 from flask import Flask, render_template
+import common
+import config
 
-app = Flask(__name__, template_folder='static/app/build/')
+app = Flask(__name__)
+app.config.from_object(config)
+db = SQLAlchemy(app)
 
-blueprints_list = [user_bp]
-for bp in blueprints_list:
-  app.register_blueprint(bp)
+common.db = db
+common.app = app
 
-@app.route('/')
-def index():
-  subtitle = u'你就是一个艺术家'
-  return render_template('index.html', subtitle=subtitle)
+from blueprints.user import user_bp
+
+def register_all_bps():
+  buleprints_candidates = (user_bp,)
+  for bp in buleprints_candidates:
+    app.register_blueprint(bp)
+
+register_all_bps()
 
 if __name__ == '__main__':
+  db.create_all()
   app.run(debug=True)
