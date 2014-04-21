@@ -77,4 +77,3 @@ def update_profile(data):
   query.update(data)
   db.session.commit()
   return query.first()
-
