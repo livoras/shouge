@@ -58,3 +58,51 @@ def login():
     status_code = 401
 
   return jsonify(**result), status_code
+
+
+@user_bp.route('/user/update', methods=['PUT'])  
+def update_user():
+  data = request.json
+
+  username = data.get('username')
+  info = data.get('info')
+  gender = data.get('gender')
+
+  status_code = None
+  current_user = None
+
+  if not session['is_login']:
+    error = ['user not login']
+    status_code = 401
+    result = {'result': 'failed', 'error': error}
+    return jsonify(**result), status_code
+  else:  
+    current_user = eval(session['user'])
+
+  if not user.is_username_valid(username):
+    error = ['username is not valid']
+    status_code = 400
+    result = {'result': 'failed', 'error': error}
+
+  elif current_user['username'] != username and user.is_username_exited(username):
+    error = ['username has been used']
+    status_code = 409
+    result = {'result': 'failed', 'error': error}
+
+  elif not user.is_gender_valid(gender):
+    error = ['gender is not valid']
+    status_code = 400
+    result = {'result': 'failed', 'error': error}
+
+  elif not user.is_info_valid(info):
+    error = ['information is too long']
+    status_code = 400
+    result = {'result': 'failed', 'error': error}
+
+  else:  
+    new_user = user.update_profile(data)
+    user.set_session(new_user)
+    status_code = 200
+    result = {'result': 'success', 'data': new_user.json()}
+
+  return jsonify(**result), status_code

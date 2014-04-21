@@ -5,6 +5,9 @@ class User(db.Model):
   username = db.Column(db.String(80), unique=True)
   email = db.Column(db.String(120), unique=True)
   password = db.Column(db.String(50))
+  info = db.Column(db.String(100), server_default='')
+  avatar_ext = db.Column(db.String(3), server_default='')
+  gender = db.Column(db.String(1), server_default='u')
 
   def __init__(self, username, email, password):
     self.username = username
@@ -15,8 +18,15 @@ class User(db.Model):
     return str(self.json())
 
   def json(self):
+    if self.avatar_ext == '':
+      avatar = 'default.jpg'
+    else:  
+      avatar = utils.encrypt(self.email) + '.' + self.avatar_ext
+
     return {
       'id': self.id,
       'username': self.username, 
-      'email': self.email
+      'email': self.email,
+      'info': self.info,
+      'avatar': avatar
     }

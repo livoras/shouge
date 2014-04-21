@@ -7,12 +7,32 @@ def is_valid_user_data(data):
   email = data.get('email')
   password = data.get('password')
 
-  if not username or not (4 <= len(username) <= 30):
+  if not is_username_valid(username):
     return ['username\'s length should be 4~30']
-  if not email or len(email) == 0: 
+
+  if not is_email_valid(email): 
     return ['email is not valid']
-  if not password or not (6 <= len(password) <= 30):
+
+  if not is_password_valid(password):
     return ['password\'s length should be between 6 and 30']
+
+def is_username_valid(username):
+  return username and (4 <= len(username) <= 30)
+
+def is_email_valid(email):
+  return email and not len(email) == 0 
+
+def is_password_valid(password):
+  return password and (6 <= len(password) <= 30)
+
+def is_username_exited(username):
+  return User.query.filter_by(username=username).first()
+
+def is_gender_valid(gender):
+  return gender in ['f', 'm', 'u']
+
+def is_info_valid(info):
+  return len(info) <= 100
 
 
 def user_no_conflict(data):
@@ -49,3 +69,12 @@ def login(user_data):
 
   password = utils.encrypt(password)
   return User.query.filter_by(email=email, password=password).first()
+
+
+def update_profile(data):
+  current_user = eval(session['user'])
+  query = User.query.filter_by(id=current_user['id'])
+  query.update(data)
+  db.session.commit()
+  return query.first()
+

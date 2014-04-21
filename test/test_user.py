@@ -23,7 +23,10 @@ def test_signup():
   with app.test_client() as c:
     rv = send_json('post', '/user/signup', data, c)
     new_user = eval(session['user'])
+    log(new_user)
     assert new_user['username'] == 'jerry'
+    assert new_user['info'] == ''
+    assert new_user['avatar'] == 'default.jpg'
     assert session['is_login'] == True
     assert 'success' in rv.data  
 
@@ -86,3 +89,47 @@ def test_login():
     assert 'not correct' in rv.data
     assert session.get('is_login', False) == False
     assert rv.status_code == 401
+
+
+def test_update_user():
+  with app.test_client() as c:
+    with c.session_transaction() as sess:
+      sess['is_login'] = True
+      sess['user'] = '{"id": "1", "username": "livoras"}'
+
+    rv = send_json('put', '/user/update', {'username': 'lucy', 'info': '233333', 'gender': 'u'}, c) 
+    assert 'success' in rv.data
+    assert 'lucy' in rv.data
+    assert '233333' in rv.data
+    assert 'lucy' in session['user']
+
+    # There would be no error if the update name is the same as your name
+    rv = send_json('put', '/user/update', {'username': 'lucy', 'info': '233333', 'gender': 'f'}, c) 
+    assert 'success' in rv.data
+
+    rv = send_json('put', '/user/update', {'username': 'lucy', 'info': '233333', 'gender': 'c'}, c) 
+    assert 'gender is not valid' in rv.data
+
+    rv = send_json('put', '/user/update', {'username': '', 'info': '233333', 'gender': 'c'}, c) 
+    assert 'username is not valid' in rv.data
+
+    user_data = {
+      'username': 'new_user', 
+      'email': 'new_user@163.com', 
+      'password': 'fuckyoueveryday'
+    }
+    user.add_new_user(user_data)
+
+    # conflict username should return 409
+    rv = send_json('put', '/user/update', {'username': 'new_user', 'info': '233333', 'gender': 'c'}, c) 
+    assert 'username has been used' in rv.data
+    assert rv.status_code == 409
+
+    # not login should return 401
+    with c.session_transaction() as sess:
+      sess['is_login'] = False
+
+    rv = send_json('put', '/user/update', {'username': 'lucy', 'info': '233333', 'gender': 'u'}, c) 
+    assert 'user not login' in rv.data
+    assert rv.status_code == 401
+
