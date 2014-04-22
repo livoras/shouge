@@ -10,6 +10,7 @@ class User(db.Model):
   gender = db.Column(db.String(1), server_default='u')
 
   def __init__(self, username, email, password):
+    self.p = password
     self.username = username
     self.email = email
     self.password = utils.encrypt(password)

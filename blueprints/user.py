@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request, abort, session
 import business.user as user 
 
 user_bp = Blueprint('user', __name__)
-import sys
+
 
 @user_bp.route('/user/signup', methods=['POST'])
 def signup():
@@ -104,5 +104,36 @@ def update_user():
     user.set_session(new_user)
     status_code = 200
     result = {'result': 'success', 'data': new_user.json()}
+
+  return jsonify(**result), status_code
+
+
+@user_bp.route('/user/update_password', methods=['PUT'])
+def update_password():
+  data = request.json
+  old_password = data.get('oldPassword')
+  new_password = data.get('newPassword')
+
+  status_code = None 
+
+  if not session.get('is_login'):
+    error = ['You have to login first']
+    result = {'result': 'failed', 'error': error}
+    status_code = 401
+
+  elif not user.is_password_correct(old_password):
+    error = ['Password is not correct']
+    result = {'result': 'failed', 'error': error}
+    status_code = 401
+
+  elif not user.is_password_valid(new_password):
+    error = ['New password is not valid']
+    result = {'result': 'failed', 'error': error}
+    status_code = 400
+
+  else:  
+    user.update_password(new_password)
+    result = {'result': 'success'}
+    status_code = 200
 
   return jsonify(**result), status_code

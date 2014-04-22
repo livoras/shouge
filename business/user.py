@@ -77,3 +77,13 @@ def update_profile(data):
   query.update(data)
   db.session.commit()
   return query.first()
+
+def update_password(password):
+  user = eval(session['user'])
+  return User.query.filter_by(id=user['id']).update(dict(password=utils.encrypt(password)))
+
+def is_password_correct(password):
+  user = eval(session['user'])
+  user = User.query.filter_by(id=user['id']).first()
+  return utils.encrypt(password) == user.password
+

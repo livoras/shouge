@@ -2,6 +2,8 @@ from app import app, db
 from flask import request, json, session
 from helpers import log, send_json
 from business import user
+from models.user import User
+from common import utils
 
 cli = None
 
@@ -23,7 +25,6 @@ def test_signup():
   with app.test_client() as c:
     rv = send_json('post', '/user/signup', data, c)
     new_user = eval(session['user'])
-    log(new_user)
     assert new_user['username'] == 'jerry'
     assert new_user['info'] == ''
     assert new_user['avatar'] == 'default.jpg'
@@ -133,3 +134,27 @@ def test_update_user():
     assert 'user not login' in rv.data
     assert rv.status_code == 401
 
+
+def test_update_password():
+  with app.test_client() as c:
+
+    with c.session_transaction() as sess:
+      sess['is_login'] = True
+      sess['user'] = '{"id": "1"}'
+
+    rv = send_json('put', '/user/update_password', {"oldPassword": "123456", "newPassword": "12345"}, c)  
+    assert 'failed' in rv.data
+    assert 401 == rv.status_code
+
+    rv = send_json('put', '/user/update_password', {"oldPassword": "1343124312", "newPassword": "1"}, c)
+    assert 'failed' in rv.data
+    assert 400 == rv.status_code
+
+    rv = send_json('put', '/user/update_password', {
+      "oldPassword": "1343124312",
+      "newPassword": "newpassword"}, c)
+
+    user = User.query.filter_by(id="1").first()
+    assert 'success' in rv.data
+    assert 200 == rv.status_code
+    assert user.password == utils.encrypt('newpassword')
